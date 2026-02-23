@@ -1,0 +1,141 @@
+===============================
+SWITCH SW1 CONFIGURATION
+===============================
+
+enable
+configure terminal
+
+! Create VLANs
+vlan 10
+name ADMIN
+exit
+
+vlan 20
+name STUDENTS
+exit
+
+vlan 30
+name SERVERS
+exit
+
+! Assign Access Ports
+interface fa0/1
+switchport mode access
+switchport access vlan 10
+exit
+
+interface fa0/2
+switchport mode access
+switchport access vlan 20
+exit
+
+interface fa0/3
+switchport mode access
+switchport access vlan 30
+exit
+
+! Configure Trunk to Router
+interface fa0/24
+switchport mode trunk
+exit
+
+end
+write memory
+
+
+===============================
+ROUTER R1 CONFIGURATION
+===============================
+
+enable
+configure terminal
+
+! Enable physical interface
+interface g0/0
+no shutdown
+exit
+
+! VLAN 20 - Students (/25)
+interface g0/0.20
+encapsulation dot1Q 20
+ip address 192.168.100.1 255.255.255.128
+exit
+
+! VLAN 10 - Admin (/26)
+interface g0/0.10
+encapsulation dot1Q 10
+ip address 192.168.100.129 255.255.255.192
+exit
+
+! VLAN 30 - Servers (/27)
+interface g0/0.30
+encapsulation dot1Q 30
+ip address 192.168.100.225 255.255.255.224
+exit
+
+
+===============================
+DHCP CONFIGURATION ON ROUTER
+===============================
+
+! Exclude Gateway Addresses
+ip dhcp excluded-address 192.168.100.1
+ip dhcp excluded-address 192.168.100.129
+ip dhcp excluded-address 192.168.100.225
+
+! VLAN 20 Pool
+ip dhcp pool VLAN20
+network 192.168.100.0 255.255.255.128
+default-router 192.168.100.1
+dns-server 192.168.100.225
+exit
+
+! VLAN 10 Pool
+ip dhcp pool VLAN10
+network 192.168.100.128 255.255.255.192
+default-router 192.168.100.129
+dns-server 192.168.100.225
+exit
+
+! VLAN 30 Pool
+ip dhcp pool VLAN30
+network 192.168.100.224 255.255.255.224
+default-router 192.168.100.225
+dns-server 192.168.100.225
+exit
+
+end
+write memory
+
+
+===============================
+WLAN ROUTER CONFIGURATION (GUI)
+===============================
+
+SSID: TechCampus-WiFi
+Security: WPA2-PSK
+Password: TCwifi123
+
+IP Address: 192.168.100.193
+Subnet Mask: 255.255.255.224
+Default Gateway: 192.168.100.193 (or Router WLAN gateway if connected)
+
+Enable DHCP for WLAN subnet if required.
+
+
+===============================
+VERIFICATION COMMANDS
+===============================
+
+! On Router
+show ip interface brief
+show ip route
+
+! On Switch
+show vlan brief
+show interfaces trunk
+
+! On PCs
+ipconfig
+ping 192.168.100.1
+ping 192.168.100.225
